@@ -1,0 +1,16 @@
+[{
+  "caption": "Perldoc",
+  "id": "perldoc",
+  "children": [
+    {
+      "id": "perldoc",
+      "caption": "perldoc",
+      "command": "perldoc"
+    },
+    {
+      "id": "perldoc_source",
+      "caption": "perldoc -lm",
+      "command": "perldocsource"
+    }
+  ]
+}]
