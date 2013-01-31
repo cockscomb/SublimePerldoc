@@ -31,7 +31,7 @@ class PerldocCommand(sublime_plugin.WindowCommand):
         return ''
 
     def done(self, str):
-        self.title = 'perldoc — {}'.format(str)
+        self.title = 'perldoc - {name}'.format(name=str)
         self.command(['perldoc', '-T', str])
 
     def change(self, str):
@@ -41,7 +41,8 @@ class PerldocCommand(sublime_plugin.WindowCommand):
         pass
 
     def command(self, command):
-        output = subprocess.check_output(command).decode('utf-8')
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE)
+        output = proc.stdout.read().decode('utf-8')
         self.show_result(output)
 
     def show_result(self, result):
@@ -52,15 +53,23 @@ class PerldocCommand(sublime_plugin.WindowCommand):
 
     def show_panel(self, text):
         output_panel = self.window.create_output_panel('perldoc_panel')
-        output_panel.run_command('append', {'characters': text})
+        self.append(output_panel, text)
         self.window.run_command('show_panel', {'panel': 'output.perldoc_panel'})
 
     def show_window(self, text):
-        output_view = self.window.new_file(flags=0)
-        output_view.assign_syntax('Packages/SublimePerldoc/man-pages.tmbundle/Syntaxes/Man.tmLanguage')
+        output_view = self.window.new_file()
+        output_view.set_syntax_file('Packages/SublimePerldoc/man-pages.tmbundle/Syntaxes/Man.tmLanguage')
         output_view.set_name(self.title)
         output_view.set_scratch(True)
-        output_view.run_command('append', {'characters': text})
+        self.append(output_view, text)
+
+    def append(self, view, text):
+        if (int(sublime.version()) > 3000):
+            view.run_command('append', {'characters': text})
+        else:
+            edit = view.begin_edit()
+            view.insert(edit, 0, text)
+            view.end_edit(edit)
 
 
 class PerldocsourceCommand(PerldocCommand):
