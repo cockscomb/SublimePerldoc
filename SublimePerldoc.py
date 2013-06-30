@@ -10,8 +10,9 @@ class PerldocCommand(sublime_plugin.WindowCommand):
         self.show_in_panel = settings.get('show_perldoc_in_panel', False)
 
         build_env = settings.get('build_env')
+        self.env = {}
         if build_env and build_env.get('PATH'):
-            os.environ['PATH'] = build_env['PATH']
+            self.env['PATH'] = build_env['PATH']
 
         self.show_document()
 
@@ -41,8 +42,9 @@ class PerldocCommand(sublime_plugin.WindowCommand):
         pass
 
     def command(self, command):
-        proc = subprocess.Popen(command, stdout=subprocess.PIPE)
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_project_root(), env=self.env)
         output = proc.stdout.read().decode('utf-8')
+        print(proc.stderr.read().decode('utf-8'))
         self.show_result(output)
 
     def show_result(self, result):
@@ -70,6 +72,15 @@ class PerldocCommand(sublime_plugin.WindowCommand):
             edit = view.begin_edit()
             view.insert(edit, 0, text)
             view.end_edit(edit)
+
+    def get_project_root(self):
+        filename = self.window.active_view().file_name()
+        if not filename:
+            return None
+        git_root = None
+        proc = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE, cwd=os.path.dirname(filename))
+        git_root = proc.stdout.read().decode('utf-8').strip()
+        return git_root
 
 
 class PerldocsourceCommand(PerldocCommand):
